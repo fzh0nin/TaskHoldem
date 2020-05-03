@@ -7,9 +7,19 @@ class Card
   include Comparable
   attr_reader :card_rank, :card_suit
 
-  def initialize
-    @card_rank = RANKS_ARRAY.sample
-    @card_suit = SUITS_ARRAY.sample
+  def initialize(rank = nil, suit = nil)
+    if rank.nil?
+      @card_rank = RANKS_ARRAY.sample
+    elsif RANKS_ARRAY.include?(rank)
+      @card_rank = rank
+    else raise ArgumentError
+    end
+    if suit.nil?
+      @card_suit = SUITS_ARRAY.sample
+    elsif SUITS_ARRAY.include?(suit)
+      @card_suit = suit
+    else raise ArgumentError
+    end
   end
 
   def <=>(other)

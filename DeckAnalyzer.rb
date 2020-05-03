@@ -12,12 +12,15 @@ class DeckAnalyzer
               :is_two_pairs, :two_pairs_combination, \
               :is_straight, :straight_combination, :high_card_straight_id, \
               :is_straight_flush, :straight_flush_combination, \
+              :high_card_straight_flush, :straight_flush_suit,\
               :is_flush_royal, :flush_royal_combination, :royal_suit, \
               :is_high_card, :high_card_combination, \
               :winning, :winning_combination
 
   def initialize(deck)
     find_winning(deck)
+    puts("Winning combination is:\n #{@winning}")
+    puts("Winning cards are:\n #{@winning_combination}")
   end
 
   # done
@@ -33,9 +36,8 @@ class DeckAnalyzer
     [count, similar_cards_combination]
   end
 
-  #done
+  # done
   def flush_royal?(deck)
-    # to do
     i = 0
     j = 12
     while i < 4
@@ -51,23 +53,64 @@ class DeckAnalyzer
           break
         end
       end
+      j = 12
       i += 1
     end
-    @is_flush_royal
   end
 
-  #done
+  # done
   def flush_royal_find(deck)
+    @flush_royal_combination = []
     count = 12
     while count >= 8
-      @flush_royal_combination.push([RANKS_ARRAY[count], @royal_suit])
+      @flush_royal_combination.push(Card.new(RANKS_ARRAY[count], @royal_suit))
       count -= 1
     end
-
   end
 
+  # done
   def straight_flush?(deck)
-    #to do
+    i = 12
+    j = 0
+    while j < 4
+      while i >= 3
+        if deck.deck_ranks[i] > 0 && \
+           deck.deck_arr.find_all { |elem| elem.card_rank == RANKS_ARRAY[i] && \
+                                   elem.card_suit == SUITS_ARRAY[j] }.any? && \
+           deck.deck_ranks[i - 1] > 0 && \
+           deck.deck_arr.find_all { |elem| elem.card_rank == RANKS_ARRAY[i - 1] && \
+                                   elem.card_suit == SUITS_ARRAY[j] }.any? && \
+           deck.deck_ranks[i - 2] > 0 && \
+           deck.deck_arr.find_all { |elem| elem.card_rank == RANKS_ARRAY[i - 2] && \
+                                   elem.card_suit == SUITS_ARRAY[j] }.any? && \
+           deck.deck_ranks[i - 3] > 0 && \
+           deck.deck_arr.find_all { |elem| elem.card_rank == RANKS_ARRAY[i - 3] && \
+                                   elem.card_suit == SUITS_ARRAY[j] }.any? && \
+           deck.deck_ranks[i - 4] > 0 && \
+           deck.deck_arr.find_all { |elem| elem.card_rank == RANKS_ARRAY[i - 4] && \
+                                   elem.card_suit == SUITS_ARRAY[j] }.any?
+          @is_straight_flush = true
+          @high_card_straight_flush = i
+          @straight_flush_suit = SUITS_ARRAY[j]
+        end
+
+        i -= 1
+      end
+      j += 1
+      i = 12
+    end
+  end
+
+  # done
+  def straight_flush_combination_find(deck)
+    @straight_flush_combination = []
+    count = 0
+    while count < 5
+      @straight_flush_combination.push(deck.deck_arr.detect \
+      { |i| i.card_rank == RANKS_ARRAY[@high_card_straight_flush] && i.card_suit == @straight_flush_suit})
+      @high_card_straight_flush -= 1
+      count += 1
+    end
   end
 
   # done
@@ -131,7 +174,7 @@ class DeckAnalyzer
   # done
   def straight?(deck)
     count = 12
-    while count > 4
+    while count >= 3
       if deck.deck_ranks[count] > 0 && deck.deck_ranks[count - 1] > 0\
        && deck.deck_ranks[count - 2] > 0 && deck.deck_ranks[count - 3] > 0\
        && deck.deck_ranks[count - 4] > 0
@@ -207,56 +250,81 @@ class DeckAnalyzer
   end
 
   def find_winning(deck)
+
     flush_royal?(deck)
-    flush_combination_find(deck) if @is_flush_royal
-    straight_flush?(deck)
-    four?(deck)
-    four_combination_find(deck) if @is_four
-    full_house?(deck)
-    full_combination_find(deck) if @is_full
-    flush?(deck)
-    flush_combination_find(deck) if @is_flush
-    straight?(deck)
-    straight_combination_find(deck) if @is_straight
-    three?(deck)
-    three_find(deck) if @is_three
-    two_pairs?(deck)
-    two_pairs_find(deck) if @is_two_pairs
-    pair?(deck)
-    pair_find(deck) if @is_pair
-    high_card_find(deck)
-    if @is_flush_royal == true
-      @winning = 'flush royale'
-      @winning_combination = @flush_royal_combination.join(' ')
-    elsif @is_straight_flush == true
-      @winning = 'straight flush'
-      @winning_combination = @straight_flush_combination
-    elsif @is_four == true
-      @winning = 'four'
-      @winning_combination = @four_combination.join(' ')
-    elsif @is_full == true
-      @winning = 'full house'
-      @winning_combination = @full_combination.join(' ')
-    elsif @is_flush == true
-      @winning = 'flush'
-      @winning_combination = @flush_combination.join(' ')
-    elsif @is_straight == true
-      @winning = 'straight'
-      @winning_combination = @straight_combination.join(' ')
-    elsif @is_three == true
-      @winning = 'three'
-      @winning_combination = @three_combination.join(' ')
-    elsif @is_two_pairs == true
-      @winning = 'two pairs'
-      @winning_combination = @two_pairs_combination.join(' ')
-    elsif @is_pair == true
-      @winning = 'pair'
-      @winning_combination = @pair_combination.join(' ')
-    else
-      @winning = 'high card'
-      @winning_combination = @high_card_combination
+    if @is_flush_royal
+    flush_royal_find(deck)
+    @winning = 'flush royale'
+    @winning_combination = @flush_royal_combination.join(' ')
+    return
     end
-    puts("Winning combination is:\n #{@winning}")
-    puts("Winning cards are:\n #{@winning_combination}")
-  end
+
+    straight_flush?(deck)
+    if @is_straight_flush
+      straight_flush_combination_find(deck)
+      @winning = 'straight flush'
+      @winning_combination = @straight_flush_combination.join(' ')
+      return
+    end
+
+    four?(deck)
+    if @is_four
+    four_combination_find(deck)
+    winning = 'four'
+    @winning_combination = @four_combination.join(' ')
+    return
+    end
+
+    full_house?(deck)
+    if @is_full
+    full_combination_find(deck)
+    @winning = 'full house'
+    @winning_combination = @full_combination.join(' ')
+    return
+    end
+
+    flush?(deck)
+    if @is_flush
+    flush_combination_find(deck)
+    @winning = 'flush'
+    @winning_combination = @flush_combination.join(' ')
+    return
+    end
+
+    straight?(deck)
+    if @is_straight
+    straight_combination_find(deck)
+    @winning = 'straight'
+    @winning_combination = @straight_combination.join(' ')
+    return
+    end
+
+    three?(deck)
+    if @is_three
+    three_find(deck)
+    @winning = 'three'
+    @winning_combination = @three_combination.join(' ')
+    return
+    end
+
+    two_pairs?(deck)
+    if @is_two_pairs
+    two_pairs_find(deck)
+    @winning = 'two pairs'
+    @winning_combination = @two_pairs_combination.join(' ')
+    return
+    end
+
+    pair?(deck)
+    if @is_pair
+    pair_find(deck)
+    @winning = 'pair'
+    @winning_combination = @pair_combination.join(' ')
+    return
+    end
+
+    high_card_find(deck)
+    @winning = 'high card'
+    @winning_combination = @high_card_combination
+    end
 end
